@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-ehn^fy%n26!0yiiyp8uclk!@+4)4j(%)4g2^%d=2_becmuz!oi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['qr_restaurant.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['qr-restaurant-whw4.onrender.com', 'localhost', '127.0.0.1']
 
 # Application definition
 
