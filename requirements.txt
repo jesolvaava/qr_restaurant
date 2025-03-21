@@ -37,3 +37,6 @@ qrcode==8.0
 # Other essential libraries
 requests==2.32.3
 urllib3==2.3.0
+
+
+django-cloudinary-storage
