@@ -112,14 +112,14 @@
     <!-- Payment Container -->
     <div class="payment-container">
         <h1>UPI Payment</h1>
-        <input type="text" id="upi-id" placeholder="Enter UPI ID (e.g., 1234567890@upi)">
+        <input type="text" id="upi-id" placeholder="Enter UPI ID (e.g., 1234567890)" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
         <button onclick="processPayment()">Submit Payment</button>
     </div>
 
     <script>
         function processPayment() {
             const upiId = document.getElementById('upi-id').value;
-            const upiPattern = /^\d{10}@upi$/;
+            const upiPattern = /^\d{10}$/; // Validate 10-digit number
 
             if (upiPattern.test(upiId)) {
                 fetch('/payment/', {
@@ -140,7 +140,7 @@
                     }
                 });
             } else {
-                alert('Invalid UPI ID. Please enter a valid UPI ID.');
+                alert('Invalid UPI ID. Please enter a 10-digit number.');
             }
         }
     </script>
