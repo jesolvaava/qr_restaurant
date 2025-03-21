@@ -50,9 +50,9 @@ def payment(request):
             if not upi_id or not order_id:
                 return JsonResponse({'status': 'error', 'message': 'Missing UPI ID or order ID'}, status=400)
 
-            # Simulate UPI ID validation
-            if not upi_id.endswith('@upi'):
-                return JsonResponse({'status': 'error', 'message': 'Invalid UPI ID'}, status=400)
+            # Validate 10-digit UPI ID
+            if not upi_id.isdigit() or len(upi_id) != 10:
+                return JsonResponse({'status': 'error', 'message': 'Invalid UPI ID. Please enter a 10-digit number.'}, status=400)
 
             # Update order status to 'pending' (send to kitchen)
             order = Order.objects.get(id=order_id)
