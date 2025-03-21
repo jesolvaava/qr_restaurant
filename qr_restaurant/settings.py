@@ -134,7 +134,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # Cloudinary settings
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'qrdb',  # Replace with your Cloudinary cloud name
+    'CLOUD_NAME': 'dtwtgeyfq',  # Replace with your Cloudinary cloud name
     'API_KEY': '431892139533133',       # Replace with your Cloudinary API key
     'API_SECRET': 'H7cvbeLSGKKG8-ba3gUpgc2vO0M', # Replace with your Cloudinary API secret
 }
