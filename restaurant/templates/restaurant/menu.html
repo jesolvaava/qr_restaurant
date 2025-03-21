@@ -271,12 +271,15 @@
         </header>
         <div class="menu-grid">
             {% for item in menu_items %}
-            <div class="menu-card">
-                {% if item.image_url %}  <!-- Use image_url instead of item.image.url -->
-                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="menu-item-image">
-                {% else %}
-                <img src="{% static 'images/default_food.jpg' %}" alt="Default Food Image" class="menu-item-image">
-                {% endif %}
+    <div>
+        <h2>{{ item.name }}</h2>
+        <p>{{ item.description }}</p>
+        <p>Price: ${{ item.price }}</p>
+        {% if item.image %}
+            <img src="{{ item.image.url }}" alt="{{ item.name }}">
+        {% else %}
+            <p>No image available</p>
+        {% endif %}
                 <div class="menu-item-details">
                     <h3>{{ item.name }}</h3>
                     <p>{{ item.description }}</p>
