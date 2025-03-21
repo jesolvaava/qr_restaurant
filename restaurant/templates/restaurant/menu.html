@@ -65,25 +65,25 @@
         }
 
         /* Home Button Styles */
-.home-button {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #4a6cf7, #6e8efb);
-    color: white;
-    padding: 10px 20px;
-    font-size: 1rem;
-    border-radius: 6px;
-    text-decoration: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: background 0.3s ease, transform 0.3s ease;
-}
+        .home-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #4a6cf7, #6e8efb);
+            color: white;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
 
-.home-button:hover {
-    background: linear-gradient(135deg, #6e8efb, #4a6cf7);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
+        .home-button:hover {
+            background: linear-gradient(135deg, #6e8efb, #4a6cf7);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
 
         /* Menu Grid */
         .menu-grid {
@@ -272,8 +272,8 @@
         <div class="menu-grid">
             {% for item in menu_items %}
             <div class="menu-card">
-                {% if item.image %}
-                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="menu-item-image">
+                {% if item.image_url %}  <!-- Use image_url instead of item.image.url -->
+                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="menu-item-image">
                 {% else %}
                 <img src="{% static 'images/default_food.jpg' %}" alt="Default Food Image" class="menu-item-image">
                 {% endif %}
