@@ -64,6 +64,27 @@
             color: #666;
         }
 
+        /* Home Button Styles */
+.home-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #4a6cf7, #6e8efb);
+    color: white;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.home-button:hover {
+    background: linear-gradient(135deg, #6e8efb, #4a6cf7);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
         /* Menu Grid */
         .menu-grid {
             display: grid;
@@ -246,6 +267,7 @@
         <header class="header">
             <h1>Welcome to QR Restaurant</h1>
             <p>Scan the QR code to view the menu and place your order.</p>
+            <a href="{% url 'home' %}" class="home-button">Home</a>
         </header>
         <div class="menu-grid">
             {% for item in menu_items %}
