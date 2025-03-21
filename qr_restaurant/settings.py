@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -128,3 +131,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Enable sessions
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+# Cloudinary settings
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'qrdb',  # Replace with your Cloudinary cloud name
+    'API_KEY': '431892139533133',       # Replace with your Cloudinary API key
+    'API_SECRET': 'H7cvbeLSGKKG8-ba3gUpgc2vO0M', # Replace with your Cloudinary API secret
+}
+
+# Use Cloudinary for media files
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
