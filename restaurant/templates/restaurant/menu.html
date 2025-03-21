@@ -314,7 +314,114 @@
     </div>
 
     <script>
-        // JavaScript remains the same as in your original code
+        // JavaScript for functionality
+        let cart = {};
+        const tableId = '{{ table.id }}';
+
+        // Quantity Stepper Functionality
+        document.querySelectorAll('.quantity-stepper').forEach(stepper => {
+            const decrementButton = stepper.querySelector('.decrement');
+            const incrementButton = stepper.querySelector('.increment');
+            const quantityInput = stepper.querySelector('.quantity-input');
+            const itemId = decrementButton.getAttribute('data-item-id');
+
+            decrementButton.addEventListener('click', () => {
+                let value = parseInt(quantityInput.value);
+                if (value > 0) {
+                    value--;
+                    quantityInput.value = value;
+                }
+            });
+
+            incrementButton.addEventListener('click', () => {
+                let value = parseInt(quantityInput.value);
+                value++;
+                quantityInput.value = value;
+            });
+        });
+
+        // Add to Cart functionality
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', () => {
+                const itemId = button.getAttribute('data-item-id');
+                const quantity = parseInt(document.querySelector(`.quantity-input[data-item-id="${itemId}"]`).value);
+                if (quantity > 0) {
+                    cart[itemId] = quantity;
+                    console.log(`Added to cart: Item ${itemId}, Quantity ${quantity}`);
+                    alert(`Added ${quantity} of item ${itemId} to cart.`);
+                } else {
+                    alert('Please select a quantity.');
+                }
+            });
+        });
+
+        // View Cart functionality
+        document.getElementById('view-cart').addEventListener('click', () => {
+            // Save the cart to the session
+            fetch('/update_cart/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ cart: cart })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = '/view_cart/';  // Redirect to the View Cart page
+                } else {
+                    alert('Error updating cart.');
+                }
+            });
+        });
+
+        // Checkout functionality
+        document.getElementById('checkout').addEventListener('click', () => {
+            if (Object.keys(cart).length > 0) {
+                const checkoutData = {
+                    table_number: tableId,
+                    items: Object.entries(cart).map(([item_id, quantity]) => ({
+                        item_id: item_id,
+                        quantity: quantity
+                    }))
+                };
+                fetch('/checkout/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(checkoutData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        alert('Error placing order: ' + (data.message || 'Unknown error'));
+                    }
+                });
+            } else {
+                alert('Cart is empty.');
+            }
+        });
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
 </body>
 </html>
