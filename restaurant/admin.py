@@ -19,6 +19,13 @@ class MenuAdmin(admin.ModelAdmin):
     image_preview.short_description = 'Image Preview'
 
     def image_preview(self, obj):
+        if obj.image_url:
+            return mark_safe(f'<img src="{obj.image_url}" width="150" height="150" />')
+        return "No Image"
+
+    image_preview.short_description = 'Image Preview'
+
+    def image_preview(self, obj):
         if obj.image:
             return mark_safe(f'<img src="{obj.image.url}" width="150" height="150" />')
         return "No Image"
