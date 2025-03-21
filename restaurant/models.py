@@ -1,4 +1,6 @@
+# restaurant/models.py
 from django.db import models
+from django.utils import timezone
 
 class Table(models.Model):
     table_number = models.IntegerField(unique=True)
@@ -10,8 +12,11 @@ class Menu(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     price = models.DecimalField(max_digits=6, decimal_places=2)
-    image = models.ImageField(upload_to='menu_images/', blank=True, null=True)  # Use ImageField instead of CloudinaryField
-    is_in_stock = models.BooleanField(default=True)
+    image = models.ImageField(upload_to='menu_images/', blank=True, null=True)
+    is_in_stock = models.BooleanField(default=True)  # Track stock status
+
+    def __str__(self):
+        return self.name
 
     def __str__(self):
         return self.name
@@ -38,11 +43,11 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity}x {self.menu_item.name}"
-
+    
 class Staff(models.Model):
     username = models.CharField(max_length=100, unique=True)
-    password = models.CharField(max_length=100)
-    role = models.CharField(max_length=100, blank=True, null=True)
+    password = models.CharField(max_length=100)  # Store hashed passwords in production
+    role = models.CharField(max_length=100, blank=True, null=True)  # Make role optional
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
