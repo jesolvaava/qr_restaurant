@@ -85,7 +85,9 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'restaurant/static')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'restaurant/static')]  # Your static files directories
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Directory for collected static files
+
 
 # Media files
 MEDIA_URL = '/media/'
