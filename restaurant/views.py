@@ -50,9 +50,9 @@ def payment(request):
             if not upi_id or not order_id:
                 return JsonResponse({'status': 'error', 'message': 'Missing UPI ID or order ID'}, status=400)
 
-            # Validate UPI ID as a 10-digit number
-            if not re.match(r'^\d{10}$', upi_id):
-                return JsonResponse({'status': 'error', 'message': 'Invalid UPI ID. Must be a 10-digit number.'}, status=400)
+            # Validate UPI ID as 10 digits, optionally followed by @upi
+            if not re.match(r'^\d{10}(@upi)?$', upi_id):
+                return JsonResponse({'status': 'error', 'message': 'Invalid UPI ID. Must be a 10-digit number with or without @upi.'}, status=400)
 
             # Update order status to 'pending' (send to kitchen)
             order = Order.objects.get(id=order_id)
@@ -63,6 +63,8 @@ def payment(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     return render(request, 'restaurant/payment.html')
+
+
 
 def order_submitted(request):
     # Retrieve the latest order ID from the session
