@@ -2,6 +2,7 @@
 from django.db import models
 from django.utils import timezone
 from django.core.validators import FileExtensionValidator
+from django.urls import reverse
 
 class Table(models.Model):
     table_number = models.IntegerField(unique=True)
@@ -17,19 +18,31 @@ class Menu(models.Model):
         upload_to='menu_images/',
         blank=True,
         null=True,
-        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])]
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])],
+        help_text="Upload food image (JPEG, PNG, WEBP)"
     )
     is_in_stock = models.BooleanField(default=True)
 
+    class Meta:
+        verbose_name = "Menu Item"
+        verbose_name_plural = "Menu Items"
+        ordering = ['name']
+
     def __str__(self):
-        return self.name
+        return f"{self.name} - ${self.price}"
 
     @property
     def image_url(self):
+        """
+        Returns the image URL with fallback to default image
+        Works in both development and production environments
+        """
         if self.image and hasattr(self.image, 'url'):
             return self.image.url
-        else:
-            return '/static/images/default_food.jpg'
+        return '/static/images/default_food.jpg'
+
+    def get_absolute_url(self):
+        return reverse('menu_item_detail', kwargs={'pk': self.pk})
 
 class Order(models.Model):
     table = models.ForeignKey('Table', on_delete=models.CASCADE)
