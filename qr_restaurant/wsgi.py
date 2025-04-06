@@ -21,7 +21,8 @@ os.makedirs(static_root, exist_ok=True)
 
 application = WhiteNoise(
     application,
-    root=static_root,  # Now using the created directory
-    max_age=31536000  # 1 year cache
+    root=os.path.join(BASE_DIR, 'staticfiles'),
+    max_age=31536000
 )
 application.add_files('/opt/render/project/src/media', prefix='/media/')
+application.add_files(os.path.join(BASE_DIR, 'media'), prefix='/media/')
