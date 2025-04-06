@@ -15,6 +15,15 @@ import base64
 import requests
 
 
+def staff_check(user):
+    """Check if user is staff through either Django auth or session"""
+    # Check Django's is_staff flag
+    if hasattr(user, 'is_staff') and user.is_staff:
+        return True
+    # Check session-based staff authentication
+    return False  # We'll modify this after fixing the immediate error
+
+
 def home(request):
     return render(request, 'restaurant/home.html')
 
