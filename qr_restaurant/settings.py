@@ -128,10 +128,12 @@ if not DEBUG:
     X_FRAME_OPTIONS = 'DENY'
 
 # Session settings
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_COOKIE_AGE = 86400  # 24 hours in seconds
+SESSION_COOKIE_SECURE = True  # For HTTPS
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 86400  # 24 hours in seconds
+
 
 # CSRF settings
 CSRF_COOKIE_HTTPONLY = True
@@ -141,7 +143,12 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000'
 ]
 
-# Authentication settings
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# Login URLs
 LOGIN_URL = '/staff/login/'
 LOGIN_REDIRECT_URL = '/kitchen/'
 LOGOUT_REDIRECT_URL = '/staff/login/'
