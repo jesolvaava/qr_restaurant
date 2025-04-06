@@ -1,0 +1,583 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - QR Restaurant</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            overflow-x: hidden;
+            background: #f8f9fa;
+        }
+
+        /* Background Video */
+        #background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: -1;
+        }
+
+        /* Payment Container */
+        .payment-container {
+            position: relative;
+            z-index: 1;
+            max-width: 500px;
+            margin: 30px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .payment-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .payment-header h1 {
+            font-size: 1.8rem;
+            color: #4a6cf7;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .amount-display {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 10px 0;
+            background: linear-gradient(135deg, #4a6cf7, #6a11cb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Payment Methods */
+        .payment-methods {
+            margin-bottom: 25px;
+        }
+
+        .method-tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+
+        .method-tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .method-tab.active {
+            border-bottom: 3px solid #4a6cf7;
+            color: #4a6cf7;
+            font-weight: 600;
+        }
+
+        .method-content {
+            display: none;
+        }
+
+        .method-content.active {
+            display: block;
+        }
+
+        /* QR Code Section */
+        .qr-section {
+            text-align: center;
+            padding: 25px;
+            background: #f9f9f9;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+        }
+
+        .qr-code {
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .qr-instructions {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .payment-details {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            border: 1px solid #eee;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        /* UPI Section */
+        .upi-section input {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        .upi-section input:focus {
+            border-color: #4a6cf7;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+        }
+
+        /* Payment Button */
+        .pay-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #4a6cf7, #6a11cb);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(74, 108, 247, 0.3);
+        }
+
+        .pay-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 108, 247, 0.4);
+        }
+
+        .pay-button:active {
+            transform: translateY(0);
+        }
+
+        .pay-button.secondary {
+            background: linear-gradient(135deg, #7f8c8d, #5a6268);
+            box-shadow: 0 4px 15px rgba(127, 140, 141, 0.2);
+        }
+
+        .pay-button.secondary:hover {
+            box-shadow: 0 6px 20px rgba(127, 140, 141, 0.3);
+        }
+
+        .notify-button {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .notify-button:hover {
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        /* Status Message */
+        .payment-status {
+            text-align: center;
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+            font-size: 0.95rem;
+        }
+
+        .payment-status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+            border: 1px solid #c8e6c9;
+        }
+
+        .payment-status.error {
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+            border: 1px solid #ffcdd2;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Processing Overlay */
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .processing-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 350px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        .processing-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4a6cf7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .notification-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        
+        }
+        .processing-text {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Video -->
+    <video id="background-video" autoplay loop muted>
+        <source src="{% static 'media1/res.mp4' %}" type="video/mp4">
+    </video>
+
+    <!-- Overlay -->
+    <div class="overlay"></div>
+    
+    <!-- Processing Overlay -->
+    <div class="processing-overlay" id="processingOverlay">
+        <div class="processing-box">
+            <div class="processing-spinner"></div>
+            <div class="processing-text" id="processingText">Processing payment...</div>
+        </div>
+    </div>
+
+    <!-- Payment Container -->
+    <div class="payment-container">
+        <div class="payment-header">
+            <h1>Complete Your Payment</h1>
+            <div class="amount-display">₹{{ total_amount }}</div>
+        </div>
+
+        <!-- Payment Methods Tabs -->
+        <div class="payment-methods">
+            <div class="method-tabs">
+                <div class="method-tab active" onclick="switchTab('qr')">QR Code</div>
+                <div class="method-tab" onclick="switchTab('upi')">UPI ID</div>
+                <div class="method-tab" onclick="switchTab('card')">Card</div>
+                <div class="method-tab" onclick="switchTab('cash')">Cash</div>
+            </div>
+
+            <!-- Payment Status Message -->
+            <div id="payment-status" class="payment-status"></div>
+
+            <!-- QR Code Payment -->
+            <div id="qr-method" class="method-content active">
+                <div class="qr-section">
+                    <div class="qr-code" id="qr-code-container">
+                        <img src="{% static 'media1/upi_qr_jesol.png' %}" alt="Payment QR Code">
+                    </div>
+                    <p class="qr-instructions">
+                        1. Open any UPI app on your phone<br>
+                        2. Scan the QR code above<br>
+                        3. Confirm payment of ₹<span id="qr-amount">{{ total_amount }}</span>
+                    </p>
+                    <div class="payment-details">
+                        <p>UPI ID: <span id="qr-upi-id">jesol@fam</span></p>
+                        <p>Order ID: #{{ order.id }}</p>
+                        <p>Table: #{{ order.table.table_number }}</p>
+                    </div>
+                    <button class="pay-button" onclick="processDummyPayment('qr')">I've Paid</button>
+                </div>
+            </div>
+
+            <!-- UPI Payment -->
+            <div id="upi-method" class="method-content">
+                <div class="upi-section">
+                    <input type="text" id="upi-id" placeholder="Enter UPI ID (e.g., name@upi)" value="customer@upi">
+                    <button class="pay-button" onclick="processDummyPayment('upi')">Pay via UPI</button>
+                    <p style="text-align: center; font-size: 0.85rem; color: #666; margin-top: 15px;">
+                        You'll receive a payment request on your UPI app
+                    </p>
+                </div>
+            </div>
+
+            <!-- Card Payment -->
+            <div id="card-method" class="method-content">
+                <div style="text-align: center; padding: 20px;">
+                    <p style="margin-bottom: 20px; color: #555;">Our staff will bring a card machine to your table</p>
+                    <button class="pay-button notify-button" onclick="processDummyPayment('card')">
+                        Request Card Machine
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cash Payment -->
+            <div id="cash-method" class="method-content">
+                <div style="text-align: center; padding: 20px;">
+                    <p style="margin-bottom: 20px; color: #555;">Please pay cash to our staff member</p>
+                    <button class="pay-button notify-button" onclick="processDummyPayment('cash')">
+                        Notify Staff for Cash
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+         // Global variables
+         const orderId = "{{ order.id }}";
+        const tableNumber = "{{ order.table.table_number }}";
+        const totalAmount = parseFloat("{{ total_amount }}");
+
+        // Switch between payment methods
+        function switchTab(method) {
+            document.querySelectorAll('.method-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.method-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(`${method}-method`).classList.add('active');
+            event.currentTarget.classList.add('active');
+            document.getElementById('payment-status').className = 'payment-status';
+        }
+
+ // Process dummy payment with kitchen notification
+function processDummyPayment(method) {
+    const processingOverlay = document.getElementById('processingOverlay');
+    const processingText = document.getElementById('processingText');
+    
+    // Set different messages for different methods
+    const methodMessages = {
+        'qr': 'Verifying QR code payment...',
+        'upi': 'Sending payment request to UPI app...',
+        'card': 'Requesting card machine...',
+        'cash': 'Notifying staff about cash payment...'
+    };
+    
+    processingText.textContent = methodMessages[method] || 'Processing payment...';
+    processingOverlay.style.display = 'flex';
+    
+    // For card and cash payments, notify kitchen
+    if (method === 'card' || method === 'cash') {
+        notifyKitchen(method);
+    } else {
+        // For other methods, just proceed with payment
+        completePayment();
+    }
+}
+
+function notifyKitchen(paymentMethod) {
+    fetch('/notify_kitchen/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            order_id: orderId,
+            table_number: tableNumber,
+            payment_method: paymentMethod,
+            amount: totalAmount,
+            action: 'payment_request'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            completePayment();
+        } else {
+            showStatus('Payment successful but kitchen notification failed', 'success');
+            completePayment();
+        }
+    })
+    .catch(error => {
+        console.error('Notification error:', error);
+        showStatus('Payment successful but kitchen notification failed', 'success');
+        completePayment();
+    });
+}
+
+function completePayment() {
+    // Simulate processing delay (2 seconds)
+    setTimeout(() => {
+        showStatus('Payment successful! Redirecting...', 'success');
+        document.getElementById('processingOverlay').style.display = 'none';
+        
+        // Redirect after short delay
+        setTimeout(() => {
+            window.location.href = '/order-submitted/';
+        }, 1000);
+    }, 2000);
+}
+
+        // Notify kitchen about card/cash payment
+        function notifyKitchen(paymentMethod) {
+            fetch('/notify_kitchen/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    order_id: orderId,
+                    table_number: tableNumber,
+                    payment_method: paymentMethod,
+                    amount: totalAmount,
+                    action: 'payment_request'
+                })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Notification failed');
+                return response.json();
+            })
+            .then(data => {
+                if (data.status !== 'success') {
+                    console.error('Kitchen notification failed');
+                }
+            })
+            .catch(error => {
+                console.error('Notification error:', error);
+            });
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('payment-status');
+            statusEl.innerHTML = message;
+            statusEl.className = 'payment-status';
+            statusEl.style.display = 'block';
+            if (type === 'success') {
+                statusEl.classList.add('success');
+            } else if (type === 'error') {
+                statusEl.classList.add('error');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // No initialization needed for dummy payments
+        });
+
+        let paymentCompletionCheckInterval;
+
+function checkPaymentCompletion() {
+    fetch(`/check_payment_status/${orderId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'completed') {
+                clearInterval(paymentCompletionCheckInterval);
+                showStatus('Payment completed! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = '/order-submitted/';
+                }, 1500);
+            }
+        });
+}
+
+// Modify your processDummyPayment function
+function processDummyPayment(method) {
+    const processingOverlay = document.getElementById('processingOverlay');
+    const processingText = document.getElementById('processingText');
+    const paymentSound = document.getElementById('paymentSound');
+    paymentSound.play().catch(e => console.log("Audio play failed:", e));
+    
+    processingText.textContent = method === 'card' ? 
+        'Waiting for card machine...' : 
+        'Waiting for cash collection...';
+    
+    processingOverlay.style.display = 'flex';
+    
+    // Start checking for payment completion
+    paymentCompletionCheckInterval = setInterval(checkPaymentCompletion, 3000);
+    
+    // For card/cash payments, notify kitchen
+    if (method === 'card' || method === 'cash') {
+        notifyKitchen(method);
+    } else {
+        // For other methods, complete immediately
+        completePayment();
+    }
+}
+
+function completePayment() {
+    fetch(`/complete_payment/${orderId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    });
+}
+
+    </script>
+    <audio id="paymentSound" src="{% static 'media1/payment.mp3' %}"></audio>
+</body>
+</html>

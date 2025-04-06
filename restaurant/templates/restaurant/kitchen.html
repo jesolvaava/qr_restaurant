@@ -1,0 +1,356 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Dashboard - QR Restaurant</title>
+    <meta http-equiv="refresh" content="5">
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #4a6cf7;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            grid-column: 1 / -1;
+        }
+
+        h2 {
+            color: #4a6cf7;
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        button {
+            border: none;
+            color: rgb(255, 0, 0);
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+            font-weight: 500;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .order {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .notification-card {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            position: relative;
+        }
+
+        .notification-card.cash {
+            border-left-color: #FF9800;
+            background-color: #FFF3E0;
+        }
+
+        .notification-card.card {
+            border-left-color: #2196F3;
+            background-color: #E3F2FD;
+        }
+
+        .notification-card.upi {
+            border-left-color: #4CAF50;
+            background-color: #E8F5E9;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .notification-time {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .notification-details {
+            margin-bottom: 10px;
+        }
+
+        .notification-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        .complete-btn {
+            background-color: #4CAF50;
+        }
+
+        .delivered-btn {
+            background-color: #2196F3;
+        }
+
+        #notifications-list {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            grid-column: 1 / -1;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .order-actions .accept {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+        }
+
+        .order-actions .reject {
+            background: linear-gradient(135deg, #f44336, #e53935);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .pending-badge {
+            background-color: #FFECB3;
+            color: #FF6F00;
+        }
+
+        .completed-badge {
+            background-color: #C8E6C9;
+            color: #2E7D32;
+        }
+
+        .no-notifications {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>Kitchen Dashboard</h1>
+        
+        <div class="controls">
+            <button onclick="window.location.href='/stocks/'">Manage Stocks</button>
+            <button onclick="window.location.href='{% url 'staff_logout' %}'">Logout</button>
+        </div>
+
+        <div class="section">
+            <h2>Current Orders</h2>
+            <div id="orders-list">
+                {% for order in orders %}
+                <div class="order" id="order-{{ order.id }}">
+                    <h3>Order #{{ order.id }} (Table {{ order.table.table_number }})</h3>
+                    <p>Total: ₹{{ order.total_price }}</p>
+                    <p>Status: {{ order.status }}</p>
+                    <ul>
+                        {% for item in order.items.all %}
+                        <li>{{ item.quantity }}x {{ item.menu_item.name }}</li>
+                        {% endfor %}
+                    </ul>
+                    <div class="order-actions">
+                        <button class="accept" onclick="acceptOrder({{ order.id }})">Accept</button>
+                        <button class="reject" onclick="rejectOrder({{ order.id }})">Reject</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Payment Notifications</h2>
+            <div id="notifications-list">
+                {% for notification in notifications %}
+                <div class="notification-card {{ notification.payment_method }}" data-id="{{ notification.id }}">
+                    <div class="notification-header">
+                        <div class="notification-title">
+                            {{ notification.get_payment_method_display|default:notification.get_notification_type_display }} Request
+                            {% if notification.payment_method %}
+                            <span class="status-badge pending-badge">Pending</span>
+                            {% endif %}
+                        </div>
+                        <div class="notification-time">
+                            {{ notification.created_at|timesince }} ago
+                        </div>
+                    </div>
+                    <div class="notification-details">
+                        <p><strong>Table {{ notification.table_number }}</strong> - ₹{{ notification.amount }}</p>
+                        <p>{{ notification.message }}</p>
+                    </div>
+                    {% if notification.payment_method %}
+                    <div class="notification-actions">
+                        {% if notification.payment_method == 'cash' %}
+                        <button class="action-btn complete-btn" onclick="markPaymentComplete({{ notification.id }}, 'cash')">
+                            Mark as Collected
+                        </button>
+                        {% elif notification.payment_method == 'card' %}
+                        <button class="action-btn delivered-btn" onclick="markPaymentComplete({{ notification.id }}, 'card')">
+                            Machine Delivered
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="no-notifications">
+                    <p>No payment notifications at this time</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function acceptOrder(orderId) {
+            fetch(`/accept_order/${orderId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to accept order'));
+                }
+            });
+        }
+
+        function rejectOrder(orderId) {
+            fetch(`/reject_order/${orderId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to reject order'));
+                }
+            });
+        }
+
+        function markPaymentComplete(notificationId, paymentType) {
+    fetch(`/mark_notification_complete/${notificationId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            payment_type: paymentType
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Update UI
+            const notificationCard = document.querySelector(`.notification-card[data-id="${notificationId}"]`);
+            if (notificationCard) {
+                notificationCard.style.borderLeftColor = '#4CAF50';
+                notificationCard.style.backgroundColor = '#E8F5E9';
+                
+                const badge = notificationCard.querySelector('.status-badge');
+                if (badge) {
+                    badge.textContent = 'Completed';
+                    badge.className = 'status-badge completed-badge';
+                }
+                
+                const actions = notificationCard.querySelector('.notification-actions');
+                if (actions) actions.remove();
+                
+                setTimeout(() => {
+                    notificationCard.remove();
+                    if (document.querySelectorAll('.notification-card').length === 0) {
+                        const list = document.getElementById('notifications-list');
+                        list.innerHTML = `
+                            <div class="no-notifications">
+                                <p>No payment notifications at this time</p>
+                            </div>
+                        `;
+                    }
+                }, 1500);
+            }
+        }
+    });
+}
+    </script>
+</body>
+</html>

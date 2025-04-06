@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Assistant - QR Restaurant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Same styles as previous foodbot.html */
+        body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background: #f5f5f5; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #4a6cf7; margin-bottom: 10px; }
+        .foodbot-container { background: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .chat-header { background: linear-gradient(135deg, #4a6cf7, #6e8efb); color: white; padding: 15px; text-align: center; font-weight: 600; font-size: 1.2rem; }
+        .chat-messages { height: 400px; overflow-y: auto; padding: 20px; background: #f9f9f9; }
+        .message { margin-bottom: 15px; max-width: 80%; }
+        .user-message { background: #e3f2fd; padding: 10px 15px; border-radius: 15px 15px 0 15px; margin-left: auto; }
+        .bot-message { background: white; padding: 15px; border-radius: 15px 15px 15px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .food-info { margin-top: 15px; }
+        .food-info img { max-width: 100%; max-height: 150px; border-radius: 8px; margin-bottom: 10px; }
+        .input-area { display: flex; padding: 15px; background: white; border-top: 1px solid #eee; }
+        #food-query { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 25px; outline: none; font-family: 'Poppins', sans-serif; }
+        #ask-button { background: linear-gradient(135deg, #4a6cf7, #6e8efb); color: white; border: none; padding: 0 25px; border-radius: 25px; margin-left: 10px; cursor: pointer; transition: all 0.3s; }
+        #ask-button:hover { opacity: 0.9; }
+        .back-button { display: inline-block; margin-top: 20px; background: #4a6cf7; color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: 500; transition: all 0.3s; }
+        .back-button:hover { background: #3a5bd9; transform: translateY(-2px); }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: #4a6cf7; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Food Assistant</h1>
+            <p>Ask about any food item to see its ingredients and nutritional information</p>
+        </div>
+        
+        <div class="foodbot-container">
+            <div class="chat-header">
+                🍔 QR Restaurant Food Bot
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <div class="message bot-message">
+                    Hi there! I can tell you about ingredients and nutrition facts for any food. Try asking "What's in pizza?" or "Tell me about biryani".
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <input type="text" id="food-query" placeholder="Ask about any food...">
+                <button id="ask-button" onclick="askFoodBot()">Ask</button>
+            </div>
+        </div>
+        
+        <a href="/menu/{{ table_id }}/" class="back-button">← Back to Menu</a>
+    </div>
+
+    <script>
+        async function askFoodBot() {
+            const query = document.getElementById('food-query').value.trim();
+            if (!query) return;
+            
+            const chat = document.getElementById('chat-messages');
+            const inputField = document.getElementById('food-query');
+            
+            // Add user message
+            chat.innerHTML += `
+                <div class="message user-message">
+                    ${query}
+                </div>
+            `;
+            
+            // Add loading message
+            const loadingId = 'loading-' + Date.now();
+            chat.innerHTML += `
+                <div class="message bot-message" id="${loadingId}">
+                    <div class="loading"></div> Searching for ${query}...
+                </div>
+            `;
+            
+            inputField.value = '';
+            chat.scrollTop = chat.scrollHeight;
+            
+            try {
+                // Call Open Food Facts API
+                const response = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&json=1&page_size=1`);
+                const data = await response.json();
+                
+                // Remove loading message
+                document.getElementById(loadingId).remove();
+                
+                if (data.products && data.products.length > 0) {
+                    const product = data.products[0];
+                    
+                    let responseHtml = `
+                        <div class="message bot-message">
+                            <strong>${product.product_name || query}</strong>
+                    `;
+                    
+                    if (product.image_url) {
+                        responseHtml += `
+                            <div class="food-info">
+                                <img src="${product.image_url}" alt="${product.product_name}">
+                            </div>
+                        `;
+                    }
+                    
+                    if (product.ingredients_text) {
+                        responseHtml += `
+                            <div class="food-info">
+                                <h4>Ingredients:</h4>
+                                <p>${product.ingredients_text}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    if (product.nutriments) {
+                        responseHtml += `
+                            <div class="food-info">
+                                <h4>Nutrition (per 100g):</h4>
+                                <p>${product.nutriments.energy_100g ? 'Energy: ' + product.nutriments.energy_100g + 'kcal<br>' : ''}
+                                ${product.nutriments.proteins_100g ? 'Protein: ' + product.nutriments.proteins_100g + 'g<br>' : ''}
+                                ${product.nutriments.carbohydrates_100g ? 'Carbs: ' + product.nutriments.carbohydrates_100g + 'g<br>' : ''}
+                                ${product.nutriments.fat_100g ? 'Fat: ' + product.nutriments.fat_100g + 'g' : ''}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    responseHtml += `</div>`;
+                    chat.innerHTML += responseHtml;
+                } else {
+                    chat.innerHTML += `
+                        <div class="message bot-message">
+                            Sorry, I couldn't find information about "${query}". Try being more specific or check the spelling.
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById(loadingId).remove();
+                chat.innerHTML += `
+                    <div class="message bot-message">
+                        Sorry, there was an error processing your request. Please try again later.
+                    </div>
+                `;
+            }
+            
+            chat.scrollTop = chat.scrollHeight;
+        }
+        
+        // Allow pressing Enter to submit
+        document.getElementById('food-query').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                askFoodBot();
+            }
+        });
+    </script>
+</body>
+</html>
