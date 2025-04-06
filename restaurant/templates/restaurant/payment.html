@@ -304,7 +304,7 @@
 <body>
     <!-- Background Video -->
     <video id="background-video" autoplay loop muted>
-        <source src="{% static 'media1/res.mp4' %}" type="video/mp4">
+        <source src="{% static 'media/res.mp4' %}" type="video/mp4">
     </video>
 
     <!-- Overlay -->
@@ -341,7 +341,7 @@
             <div id="qr-method" class="method-content active">
                 <div class="qr-section">
                     <div class="qr-code" id="qr-code-container">
-                        <img src="{% static 'media1/upi_qr_jesol.png' %}" alt="Payment QR Code">
+                       <img src="{% static 'media/upi_qr_jesol.png' %}" alt="Payment QR Code">
                     </div>
                     <p class="qr-instructions">
                         1. Open any UPI app on your phone<br>
@@ -578,6 +578,6 @@ function completePayment() {
 }
 
     </script>
-    <audio id="paymentSound" src="{% static 'media1/payment.mp3' %}"></audio>
+    <audio id="paymentSound" src="{% static 'media/payment.mp3' %}"></audio>
 </body>
 </html>
