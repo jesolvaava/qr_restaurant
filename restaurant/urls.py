@@ -21,4 +21,12 @@ urlpatterns = [
     path('staff_logout/', views.staff_logout, name='staff_logout'),
     path('stocks/', views.stocks, name='stocks'),  # New URL for stocks management
     path('toggle_stock/<int:item_id>/', views.toggle_stock, name='toggle_stock'),
+    path('generate_qr/', views.generate_qr_code, name='generate_qr'),
+    path('verify_payment/', views.verify_payment, name='verify_payment'),
+    path('notify_kitchen/', views.notify_kitchen, name='notify_kitchen'),
+    path('process_upi_payment/', views.process_upi_payment, name='process_upi_payment'),
+    path('mark_notification_complete/<int:notification_id>/', views.mark_notification_complete, name='mark_notification_complete'),
+    path('check_payment_status/<int:order_id>/', views.check_payment_status, name='check_payment_status'),
+    path('complete_payment/<int:order_id>/', views.complete_payment, name='complete_payment'),
+    path('foodbot/<int:table_id>/', views.food_bot, name='food_bot'),
 ]
