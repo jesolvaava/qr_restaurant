@@ -26,9 +26,16 @@ SECRET_KEY = 'django-insecure-ehn^fy%n26!0yiiyp8uclk!@+4)4j(%)4g2^%d=2_becmuz!oi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
-# Application definition
+ALLOWED_HOSTS = [
+    'qr-restaurant-5fzj.onrender.com',  # Your Render domain
+    'localhost',
+    '127.0.0.1'
+]
+
+# For production (Render automatically sets RENDER_EXTERNAL_HOSTNAME)
+if 'RENDER_EXTERNAL_HOSTNAME' in os.environ:
+    ALLOWED_HOSTS.append(os.environ['RENDER_EXTERNAL_HOSTNAME'])
 
 INSTALLED_APPS = [
     'django.contrib.admin',
