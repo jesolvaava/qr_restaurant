@@ -241,12 +241,26 @@ def staff_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        
         try:
+            # First try Django's authentication
+            user = authenticate(request, username=username, password=password)
+            if user is not None and user.is_staff:
+                login(request, user)
+                request.session['staff_authenticated'] = True
+                return redirect('kitchen')
+            
+            # Fall back to custom Staff model if Django auth fails
             staff = Staff.objects.get(username=username, password=password, is_active=True)
-            request.session['staff_id'] = staff.id  # Store staff ID in session
+            request.session['staff_id'] = staff.id
+            request.session['staff_authenticated'] = True
             return redirect('kitchen')
+            
         except Staff.DoesNotExist:
-            return render(request, 'restaurant/login.html', {'error_message': 'Invalid username or password.'})
+            return render(request, 'restaurant/login.html', {
+                'error_message': 'Invalid credentials or not authorized'
+            })
+    
     return render(request, 'restaurant/login.html')
 
 def staff_logout(request):
