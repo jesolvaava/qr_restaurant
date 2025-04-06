@@ -12,7 +12,7 @@ import io,re
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
 import base64
-#import requests
+import requests
 
 
 def home(request):
