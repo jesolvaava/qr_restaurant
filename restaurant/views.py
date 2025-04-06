@@ -8,7 +8,6 @@ import json
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.http import require_http_methods
-import qrcode
 import io,re
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
