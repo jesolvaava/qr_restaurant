@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: qr-restaurant
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn qr_restaurant.wsgi:application"
+    disk:
+      name: media_volume
+      mountPath: /opt/render/project/src/media
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DISABLE_COLLECTSTATIC
+        value: "0"
