@@ -1,42 +1,9 @@
-# Core Django and Render dependencies
-Django==5.1.4
-gunicorn==23.0.0
-whitenoise==6.9.0
-psycopg2-binary==2.9.10  # For PostgreSQL
-
-# Django extensions and utilities
-django-crispy-forms==2.3
-django-currencies==0.10.1
-django-jsonfield==1.4.1
-django-model-utils==5.0.0
-django-notifications-hq==1.8.3
-
-# Required for Django Channels (if used)
-channels==4.2.0
-daphne==4.1.2
-asgiref==3.8.1
-
-# Security and authentication
-argon2-cffi==23.1.0
-argon2-cffi-bindings==21.2.0
-cryptography==44.0.2
-
-# Utilities
-click==8.1.8
-python-dateutil==2.9.0.post0
-pytz==2024.2
-sqlparse==0.5.3
-tzdata==2024.2
-
-# Static and media file handling
-Pillow==11.1.0  # For image processing
-
-# QR code generation (if used)
-qrcode==8.0
-
-# Other essential libraries
-requests==2.32.3
-urllib3==2.3.0
-
-
-django-cloudinary-storage
+Django==5.0.6
+gunicorn==21.2.0
+whitenoise==6.6.0
+Pillow==10.3.0
+dj-database-url==2.1.0
+python-dotenv==1.0.0
+psycopg2-binary==2.9.9
+boto3==1.34.62
+django-storages==1.14.2
