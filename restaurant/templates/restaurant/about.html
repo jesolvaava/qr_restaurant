@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -191,18 +192,16 @@
         }
 
         .developer-photo {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #fff;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-            display: block;
-            margin: 0 auto 20px;
-            transition: transform 0.5s ease, box-shadow 0.5s ease;
-            /* Ensure proper path resolution */
-            background: #f0f0f0 url('/media/developer_photos/jesol.jpg') no-repeat center center;
-            background-size: cover;
+         width: 150px;
+         height: 150px;
+         border-radius: 50%;
+         object-fit: cover;
+         border: 3px solid #fff;
+         box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+         display: block;
+        margin: 0 auto 20px;
+        transition: transform 0.5s ease, box-shadow 0.5s ease;
+    /* Remove the background property and keep it as a regular img element */
         }
 
         .developer-photo:hover {
@@ -346,9 +345,9 @@
 <body>
     <!-- Background Video -->
     <video id="background-video" autoplay loop muted>
-        <source src="/static/media1/res.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+    <source src="{% static 'media/res.mp4' %}" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
 
     <!-- Back Button -->
     <button class="back-button" onclick="window.location.href='/'">Back to Home</button>
@@ -391,8 +390,7 @@
         <h2>The Developer</h2>
         
         <div class="developer-card">
-            <!--<img src="/media/developer_photos/jesol.jpg" alt="Developer Photo">  -->
-            <div class="developer-photo" id="dev-photo"></div>
+            <img src="{% static 'media/jesol.jpg' %}" alt="Developer Photo" class="developer-photo" id="dev-photo">
             <h3 class="developer-name">Jesol Paul</h3>
             <p class="developer-title">Just a Developer Nothing else to say</p>
             <p class="developer-bio">
