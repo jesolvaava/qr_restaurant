@@ -12,7 +12,6 @@ from django.core.wsgi import get_wsgi_application
 from whitenoise import WhiteNoise
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'qr_restaurant.settings')
-
 application = get_wsgi_application()
 application = WhiteNoise(application, root=os.path.join(os.path.dirname(__file__), 'staticfiles'))
-application.add_files('/opt/render/project/src/media', prefix='/media/')  # Render disk path
+application.add_files('/opt/render/project/src/media', prefix='/media/')
