@@ -134,6 +134,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 if not DEBUG:
     # These ensure files are served in production
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 
