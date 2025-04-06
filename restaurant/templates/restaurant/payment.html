@@ -578,6 +578,9 @@ function completePayment() {
 }
 
     </script>
-    <audio id="paymentSound" src="{% static 'media/payment.mp3' %}"></audio>
+    <audio id="paymentSound" preload="auto">
+    <source src="{% static 'media/payment.mp3' %}" type="audio/mpeg">
+    <button id="audioTrigger" style="display:none;"></button>
+</audio>
 </body>
 </html>
