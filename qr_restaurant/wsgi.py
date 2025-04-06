@@ -14,14 +14,12 @@ from whitenoise import WhiteNoise
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'qr_restaurant.settings')
 
 application = get_wsgi_application()
-
-# WhiteNoise configuration
 application = WhiteNoise(
     application,
     root=os.path.join(os.path.dirname(__file__), 'staticfiles'),
-    max_age=31536000,  # 1 year cache for static files
-    forever=True  # Keep the application running
+    max_age=31536000  # 1-year cache for static files
 )
+application.add_files('/opt/render/project/src/media', prefix='/media/')
 
 # Media files configuration
 media_root = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'media')
