@@ -261,9 +261,9 @@
 
     <!-- Background Video -->
     <video id="background-video" autoplay loop muted>
-        <source src="{% static 'media1/res.mp4' %}" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+    <source src="{% static 'media/res.mp4' %}" type="video/mp4">
+</video>
+
 
     <!-- Overlay to make content readable -->
     <div class="overlay"></div>
@@ -278,9 +278,9 @@
             {% for item in menu_items %}
             <div class="menu-card {% if not item.is_in_stock %}out-of-stock{% endif %}">
                 {% if item.image %}
-                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="menu-item-image">
+                 <img src="{{ item.image.url }}" alt="{{ item.name }}" class="menu-item-image">
                 {% else %}
-                <img src="{% static 'images/default_food.jpg' %}" alt="Default Food Image" class="menu-item-image">
+                 <img src="{% static 'images/default_food.jpg' %}" alt="Default Food" class="menu-item-image">
                 {% endif %}
                 <div class="menu-item-details">
                     <h3>{{ item.name }}</h3>
