@@ -1,23 +1,26 @@
-import re  
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.hashers import check_password
 from django.contrib import messages
 from django.http import JsonResponse,HttpResponseForbidden
-from restaurant.models import Table, Menu, Order, OrderItem,Staff
+from restaurant.models import Table, Menu, Order, OrderItem,Staff,Notification
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.http import require_http_methods
+import qrcode
+import io,re
+from datetime import datetime
+from django.core.exceptions import ObjectDoesNotExist
+import base64
+import requests
 
 
 def home(request):
     return render(request, 'restaurant/home.html')
 
 def about(request):
-    """
-    Renders the about page.
-    """
-    return render(request, 'about.html')
+    return render(request, 'restaurant/about.html')
 
 def view_cart(request):
     cart = request.session.get('cart', {})
@@ -44,27 +47,34 @@ def view_cart(request):
 def payment(request):
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            upi_id = data.get('upi_id')
+            # Just mark the order as paid without any real processing
             order_id = request.session.get('latest_order_id')
+            if not order_id:
+                return JsonResponse({'status': 'error', 'message': 'No active order'}, status=400)
 
-            if not upi_id or not order_id:
-                return JsonResponse({'status': 'error', 'message': 'Missing UPI ID or order ID'}, status=400)
-
-            # Validate UPI ID as 10 digits, optionally followed by @upi
-            if not re.match(r'^\d{10}(@upi)?$', upi_id):
-                return JsonResponse({'status': 'error', 'message': 'Invalid UPI ID. Must be a 10-digit number with or without @upi.'}, status=400)
-
-            # Update order status to 'pending' (send to kitchen)
             order = Order.objects.get(id=order_id)
-            order.status = 'pending'  # Now the order is sent to the kitchen
+            order.is_paid = True
+            order.status = 'accepted'
+            order.payment_method = request.POST.get('payment_method', 'dummy')
             order.save()
 
-            return JsonResponse({'status': 'success', 'redirect_url': '/order-submitted/'})
+            return JsonResponse({
+                'status': 'success', 
+                'redirect_url': '/order-submitted/'
+            })
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    return render(request, 'restaurant/payment.html')
-
+    
+    # GET request - render payment page
+    order_id = request.session.get('latest_order_id')
+    if not order_id:
+        return redirect('home')
+        
+    order = Order.objects.get(id=order_id)
+    return render(request, 'restaurant/payment.html', {
+        'total_amount': order.total_price,
+        'order': order
+    })
 
 
 def order_submitted(request):
@@ -132,8 +142,22 @@ def checkout(request):
             if not table_id or not items:
                 return JsonResponse({'status': 'error', 'message': 'Missing table number or items'}, status=400)
 
+            # Verify all items are in stock (frontend should prevent this, but we double-check)
+            for item in items:
+                menu_item = Menu.objects.get(id=item['item_id'])
+                if not menu_item.is_in_stock:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Some items in your cart are no longer available. Please refresh your menu.'
+                    }, status=400)
+
+            # Rest of your checkout logic...
             table = Table.objects.get(id=table_id)
-            order = Order.objects.create(table=table, total_price=0, status='created')  # Status is 'created', not 'pending'
+            order = Order.objects.create(
+                table=table,
+                status='pending',
+                payment_method=None
+            )
 
             total_price = 0
             for item in items:
@@ -147,12 +171,8 @@ def checkout(request):
             order.total_price = total_price
             order.save()
 
-            # Store the order ID in the session for the payment page
             request.session['latest_order_id'] = order.id
-
             return JsonResponse({'status': 'success', 'redirect_url': '/payment/'})
-        except json.JSONDecodeError as e:
-            return JsonResponse({'status': 'error', 'message': f'Invalid JSON data: {str(e)}'}, status=400)
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
@@ -240,10 +260,20 @@ def is_staff_authenticated(request):
 
 def kitchen(request):
     if not is_staff_authenticated(request):
-        return redirect('staff_login')  # Redirect to login page if not authenticated
+        return redirect('staff_login')
+    
     # Fetch pending orders
     pending_orders = Order.objects.filter(status='pending').prefetch_related('items')
-    return render(request, 'restaurant/kitchen.html', {'orders': pending_orders})
+    
+    # Fetch payment notifications (last 10)
+    payment_notifications = Notification.objects.filter(
+        notification_type='payment'
+    ).order_by('-created_at')[:10]
+    
+    return render(request, 'restaurant/kitchen.html', {
+        'orders': pending_orders,
+        'notifications': payment_notifications
+    })
 
 
 @csrf_exempt
@@ -265,3 +295,297 @@ def stocks(request):
 
     menu_items = Menu.objects.all()
     return render(request, 'restaurant/stocks.html', {'menu_items': menu_items})
+
+
+
+
+@require_http_methods(["GET"])
+def generate_qr_code(request):
+    # Get order details
+    order_id = request.session.get('latest_order_id')
+    if not order_id:
+        return HttpResponseForbidden("No active order")
+    
+    order = get_object_or_404(Order, id=order_id)
+    
+    # Create UPI payment link
+    upi_id = "jesol@fam"  # Replace with your actual UPI ID
+    amount = str(order.total_price)
+    note = f"Payment for Order #{order_id}"
+    
+    upi_link = f"upi://pay?pa={upi_id}&am={amount}&tn={note}"
+    
+    # Generate QR code
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(upi_link)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Convert to base64 for embedding in HTML
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    qr_code = base64.b64encode(buffer.getvalue()).decode()
+    
+    return JsonResponse({
+        'qr_code': qr_code,
+        'amount': amount,
+        'upi_id': upi_id
+    })
+
+@csrf_exempt
+def verify_payment(request):
+    if request.method == 'POST':
+        try:
+            order_id = request.session.get('latest_order_id')
+            if not order_id:
+                return JsonResponse({'status': 'error', 'message': 'No active order'}, status=400)
+            
+            order = Order.objects.get(id=order_id)
+            
+            # In a real app, you would verify with payment gateway
+            # For demo, we'll just check if payment_method is set
+            if order.payment_method:
+                order.is_paid = True
+                order.status = 'accepted'
+                order.save()
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'redirect_url': '/order-submitted/'
+                })
+            else:
+                return JsonResponse({
+                    'status': 'pending',
+                    'message': 'Payment not yet completed'
+                })
+                
+        except Order.DoesNotExist:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Order not found'
+            }, status=404)
+            
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
+            
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
+
+
+
+@csrf_exempt
+def notify_kitchen(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            payment_method = data.get('payment_method')
+            table_number = data.get('table_number')
+            order_id = data.get('order_id')
+            amount = data.get('amount')
+            
+            if not all([payment_method, table_number, order_id, amount]):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Missing required fields'
+                }, status=400)
+            
+            try:
+                order = Order.objects.get(id=order_id)
+                
+                # Create notification with all required fields
+                notification = Notification.objects.create(
+                    notification_type='payment',
+                    payment_method=payment_method,
+                    table_number=table_number,
+                    amount=amount,
+                    message=f"{payment_method.capitalize()} payment requested for Table {table_number}",
+                    order=order
+                )
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f'Kitchen notified about {payment_method} payment',
+                    'notification_id': notification.id
+                })
+                
+            except Order.DoesNotExist:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Order not found'
+                }, status=404)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Invalid JSON data'
+            }, status=400)
+            
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
+            
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
+
+
+@csrf_exempt
+def process_upi_payment(request):
+    if request.method == 'POST':
+        try:
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+            else:
+                data = request.POST
+            
+            upi_id = data.get('upi_id')
+            order_id = data.get('order_id')
+            table_number = data.get('table_number')
+            amount = data.get('amount')
+
+            # Validate required fields
+            if not all([upi_id, order_id, table_number, amount]):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Missing required fields'
+                }, status=400)
+
+            # Validate UPI ID format
+            if not re.match(r'^[\w.-]+@[\w]+$', upi_id):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Invalid UPI ID format (e.g., name@upi)'
+                }, status=400)
+
+            try:
+                # Get the order
+                order = Order.objects.get(id=order_id)
+                
+                # In a real implementation, you would:
+                # 1. Call UPI payment gateway API here
+                # 2. Process the payment request
+                # For demo purposes, we'll simulate success after 2 seconds
+                
+                # Create notification for kitchen
+                Notification.objects.create(
+                    notification_type='payment',
+                    payment_method='upi',
+                    table_number=table_number,
+                    amount=amount,
+                    message=f"UPI payment request for ₹{amount} to {upi_id}",
+                    order=order
+                )
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Payment request sent to UPI app'
+                })
+
+            except Order.DoesNotExist:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Order not found'
+                }, status=404)
+
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Invalid JSON data'
+            }, status=400)
+            
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
+
+
+@csrf_exempt
+def mark_notification_complete(request, notification_id):
+    if request.method == 'POST':
+        try:
+            notification = Notification.objects.get(id=notification_id)
+            order = notification.order
+            
+            # Mark order as paid
+            order.is_paid = True
+            order.payment_method = notification.payment_method
+            order.save()
+            
+            notification.delete()
+            return JsonResponse({'status': 'success'})
+        except Notification.DoesNotExist:
+            return JsonResponse({'status': 'error'}, status=404)
+    return JsonResponse({'status': 'error'}, status=400)
+
+
+@csrf_exempt
+def check_payment_status(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+        return JsonResponse({
+            'status': 'completed' if order.is_paid else 'pending'
+        })
+    except Order.DoesNotExist:
+        return JsonResponse({'status': 'error'}, status=404)
+
+@csrf_exempt
+def complete_payment(request, order_id):
+    if request.method == 'POST':
+        try:
+            order = Order.objects.get(id=order_id)
+            order.is_paid = True
+            order.payment_method = request.POST.get('payment_method', 'cash/card')
+            order.save()
+            return JsonResponse({'status': 'success'})
+        except Order.DoesNotExist:
+            return JsonResponse({'status': 'error'}, status=404)
+    return JsonResponse({'status': 'error'}, status=400)
+
+
+def food_search(request):
+    query = request.GET.get('q', '')
+    if not query:
+        return JsonResponse({'error': 'No query'}, status=400)
+    
+    # Get ingredients and nutrition
+    response = requests.get(
+        'https://api.edamam.com/api/food-database/v2/parser',
+        params={
+            'app_id': 'YOUR_APP_ID',  # Register at Edamam
+            'app_key': 'YOUR_APP_KEY',
+            'ingr': query,
+            'nutrition-type': 'logging'
+        }
+    )
+    
+    data = response.json()
+    return JsonResponse({
+        'ingredients': data['parsed'][0]['food']['foodContentsLabel'],
+        'calories': data['parsed'][0]['food']['nutrients']['ENERC_KCAL']
+    })
+
+
+
+
+def food_bot(request, table_id):
+    return render(request, 'restaurant/foodbot.html', {'table_id': table_id})
