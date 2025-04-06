@@ -2,10 +2,10 @@
 set -o errexit
 
 # Create required directories
-mkdir -p media
-mkdir -p staticfiles
+mkdir -p /opt/render/project/src/media
+mkdir -p /opt/render/project/src/staticfiles  # Explicitly create this
 
-# Install exact versions from requirements.txt
+# Install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
 
