@@ -155,7 +155,7 @@
         </div>
         <div class="cart-actions">
             <button onclick="window.location.href='/menu/{{ table_id }}/'">Back to Menu</button>
-            <button id="checkout" onclick="window.location.href='/payment/'">Checkout</button>
+            <button id="checkout" onclick="window.location.href='{% url 'payment' %}'">Checkout</button>
         </div>
     </div>
 
