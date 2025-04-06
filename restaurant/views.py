@@ -265,28 +265,36 @@ def staff_login(request):
 
 def staff_logout(request):
     if 'staff_id' in request.session:
-        del request.session['staff_id']  # Remove staff ID from session
+        del request.session['staff_id']
+    if 'staff_authenticated' in request.session:
+        del request.session['staff_authenticated']
     return redirect('staff_login')
 
 def is_staff_authenticated(request):
     return 'staff_id' in request.session
 
+@login_required
+@user_passes_test(staff_check, login_url='/staff/login/')
 def kitchen(request):
-    if not is_staff_authenticated(request):
-        return redirect('staff_login')
+    try:
+        # Fetch pending orders
+        pending_orders = Order.objects.filter(status='pending').prefetch_related('items')
+        
+        # Fetch payment notifications (last 10)
+        payment_notifications = Notification.objects.filter(
+            notification_type='payment'
+        ).order_by('-created_at')[:10]
+        
+        return render(request, 'restaurant/kitchen.html', {
+            'orders': pending_orders,
+            'notifications': payment_notifications,
+            'staff_authenticated': True  # Ensure this is passed to template
+        })
     
-    # Fetch pending orders
-    pending_orders = Order.objects.filter(status='pending').prefetch_related('items')
-    
-    # Fetch payment notifications (last 10)
-    payment_notifications = Notification.objects.filter(
-        notification_type='payment'
-    ).order_by('-created_at')[:10]
-    
-    return render(request, 'restaurant/kitchen.html', {
-        'orders': pending_orders,
-        'notifications': payment_notifications
-    })
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Kitchen view error: {str(e)}")
+        raise 
 
 
 @csrf_exempt
@@ -604,28 +612,7 @@ def staff_check(user):
     # Check both Django staff flag and session flag
     return user.is_staff or request.session.get('staff_authenticated', False)
 
-@login_required
-@user_passes_test(staff_check, login_url='/staff/login/')
-def kitchen(request):
-    try:
-        # Fetch pending orders
-        pending_orders = Order.objects.filter(status='pending').prefetch_related('items')
-        
-        # Fetch payment notifications (last 10)
-        payment_notifications = Notification.objects.filter(
-            notification_type='payment'
-        ).order_by('-created_at')[:10]
-        
-        return render(request, 'restaurant/kitchen.html', {
-            'orders': pending_orders,
-            'notifications': payment_notifications,
-            'staff_authenticated': True  # Ensure this is passed to template
-        })
-    
-    except Exception as e:
-        # Log the error for debugging
-        print(f"Kitchen view error: {str(e)}")
-        raise 
+
 
 
 
