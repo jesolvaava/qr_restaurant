@@ -3,7 +3,7 @@ services:
     name: qr-restaurant
     runtime: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn qr_restaurant.wsgi:application"
+    startCommand: "gunicorn qr_restaurant.wsgi:application --timeout 120"  # Added timeout
     disk:
       name: media_volume
       mountPath: /opt/render/project/src/media
@@ -14,3 +14,5 @@ services:
         generateValue: true
       - key: DISABLE_COLLECTSTATIC
         value: "0"
+      - key: PYTHON_VERSION  # Explicit Python version
+        value: "3.11.6"
