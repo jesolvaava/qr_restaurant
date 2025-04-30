@@ -19,7 +19,7 @@ ALLOWED_HOSTS = [
     'qr-restaurant-5fzj.onrender.com',
     'localhost',
     '127.0.0.1',
-    'Jesol.pythonanywhere.com'
+    'jesol.pythonanywhere.com'
 ]
 
 # For Render production environment
