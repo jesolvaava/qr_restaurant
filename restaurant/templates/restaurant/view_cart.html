@@ -155,31 +155,105 @@
         </div>
         <div class="cart-actions">
             <button onclick="window.location.href='/menu/{{ table_id }}/'">Back to Menu</button>
-            <button id="checkout" onclick="window.location.href='{% url 'payment' %}'">Checkout</button>
+            <button id="checkout" onclick="processCheckout()">Checkout</button>
         </div>
     </div>
 
     <script>
-        function removeFromCart(itemId) {
-            fetch('/remove_from_cart/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ item_id: itemId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Remove the item from the DOM
-                    document.getElementById(`item-${itemId}`).remove();
-                    alert('Item removed from cart.');
-                } else {
-                    alert('Error removing item from cart.');
+    function removeFromCart(itemId) {
+        fetch('/remove_from_cart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ item_id: itemId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Remove the item from the DOM
+                document.getElementById(`item-${itemId}`).remove();
+                alert('Item removed from cart.');
+                
+                // If cart is empty, disable checkout button
+                if (document.querySelectorAll('.cart-item').length === 0) {
+                    document.getElementById('checkout').disabled = true;
                 }
-            });
+            } else {
+                alert('Error removing item from cart: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while removing the item.');
+        });
+    }
+
+    function processCheckout() {
+        // Disable checkout button to prevent multiple clicks
+        const checkoutBtn = document.getElementById('checkout');
+        checkoutBtn.disabled = true;
+        checkoutBtn.textContent = 'Processing...';
+
+        // Prepare cart items data
+        const cartItems = [];
+        {% for item in cart_items %}
+        cartItems.push({
+            item_id: {{ item.id }},
+            quantity: {{ item.quantity }}
+        });
+        {% endfor %}
+
+        if (cartItems.length === 0) {
+            alert('Your cart is empty!');
+            checkoutBtn.disabled = false;
+            checkoutBtn.textContent = 'Checkout';
+            return;
         }
+
+        // Send checkout request
+        fetch('/checkout/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                table_number: {{ table_id }},
+                items: cartItems
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                // Redirect to payment page on success
+                window.location.href = data.redirect_url;
+            } else {
+                alert('Checkout failed: ' + (data.message || 'Unknown error'));
+                checkoutBtn.disabled = false;
+                checkoutBtn.textContent = 'Checkout';
+            }
+        })
+        .catch(error => {
+            console.error('Error during checkout:', error);
+            alert('Checkout failed: ' + error.message);
+            checkoutBtn.disabled = false;
+            checkoutBtn.textContent = 'Checkout';
+        });
+    }
+
+    // Initialize checkout button state
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.querySelectorAll('.cart-item').length === 0) {
+            document.getElementById('checkout').disabled = true;
+        }
+    });
     </script>
 </body>
 </html>
