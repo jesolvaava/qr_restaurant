@@ -6,13 +6,11 @@ from pathlib import Path
 import os
 import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings
+# Security settings
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-ehn^fy%n26!0yiiyp8uclk!@+4)4j(%)4g2^%d=2_becmuz!oi')
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
@@ -21,10 +19,6 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'jesol.pythonanywhere.com'
 ]
-
-# For Render production environment
-if 'RENDER_EXTERNAL_HOSTNAME' in os.environ:
-    ALLOWED_HOSTS.append(os.environ['RENDER_EXTERNAL_HOSTNAME'])
 
 # Application definition
 INSTALLED_APPS = [
@@ -46,7 +40,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'restaurant.middleware.KitchenAccessMiddleware',  # Keep this last
+    'restaurant.middleware.KitchenAccessMiddleware',
 ]
 
 ROOT_URLCONF = 'qr_restaurant.urls'
@@ -62,7 +56,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.media',  # Added for media files
+                'django.template.context_processors.media',
             ],
         },
     },
@@ -109,57 +103,39 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Create media directory if it doesn't exist
+# Create directories if they don't exist
+os.makedirs(STATIC_ROOT, exist_ok=True)
 os.makedirs(MEDIA_ROOT, exist_ok=True)
 
-# Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Storage settings
+# Storage configuration
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",  # Changed from Manifest
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
 # WhiteNoise settings
-WHITENOISE_MANIFEST_STRICT = False  # Helps with missing static files
-WHITENOISE_AUTOREFRESH = True  # Good for development
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_AUTOREFRESH = True
 
-# Security settings for production
+# Security settings
 if not DEBUG:
-    # HTTPS settings
+    SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_SSL_REDIRECT = True
-    
-    # HSTS settings
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_PRELOAD = True
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    
-    # More security settings
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
-    SECURE_BROWSER_XSS_FILTER = True
-    X_FRAME_OPTIONS = 'DENY'
-else:
-    # Development-specific settings
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-    SECURE_SSL_REDIRECT = False
 
 # Session settings
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_COOKIE_AGE = 86400  # 24 hours in seconds
 
 # CSRF settings
-CSRF_COOKIE_HTTPONLY = True
 CSRF_TRUSTED_ORIGINS = [
     'https://qr-restaurant-5fzj.onrender.com',
     'http://localhost:8000',
@@ -167,23 +143,10 @@ CSRF_TRUSTED_ORIGINS = [
     'https://jesol.pythonanywhere.com'
 ]
 
-# Authentication backends
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-]
-
-# Login URLs
+# Authentication
 LOGIN_URL = '/staff/login/'
 LOGIN_REDIRECT_URL = '/kitchen/'
 LOGOUT_REDIRECT_URL = '/staff/login/'
 
-# Email settings (for password reset if needed)
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.gmail.com'
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
