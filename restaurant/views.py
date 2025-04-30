@@ -8,20 +8,12 @@ import json
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.http import require_http_methods
+import qrcode
 import io,re
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
 import base64
 import requests
-
-
-def staff_check(user):
-    """Check if user is staff through either Django auth or session"""
-    # Check Django's is_staff flag
-    if hasattr(user, 'is_staff') and user.is_staff:
-        return True
-    # Check session-based staff authentication
-    return False  # We'll modify this after fixing the immediate error
 
 
 def home(request):
@@ -55,7 +47,6 @@ def view_cart(request):
 def payment(request):
     if request.method == 'POST':
         try:
-            # Just mark the order as paid without any real processing
             order_id = request.session.get('latest_order_id')
             if not order_id:
                 return JsonResponse({'status': 'error', 'message': 'No active order'}, status=400)
@@ -250,60 +241,38 @@ def staff_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        
         try:
-            # First try Django's authentication
-            user = authenticate(request, username=username, password=password)
-            if user is not None and user.is_staff:
-                login(request, user)
-                request.session['staff_authenticated'] = True
-                return redirect('kitchen')
-            
-            # Fall back to custom Staff model if Django auth fails
             staff = Staff.objects.get(username=username, password=password, is_active=True)
-            request.session['staff_id'] = staff.id
-            request.session['staff_authenticated'] = True
+            request.session['staff_id'] = staff.id  # Store staff ID in session
             return redirect('kitchen')
-            
         except Staff.DoesNotExist:
-            return render(request, 'restaurant/login.html', {
-                'error_message': 'Invalid credentials or not authorized'
-            })
-    
+            return render(request, 'restaurant/login.html', {'error_message': 'Invalid username or password.'})
     return render(request, 'restaurant/login.html')
 
 def staff_logout(request):
     if 'staff_id' in request.session:
-        del request.session['staff_id']
-    if 'staff_authenticated' in request.session:
-        del request.session['staff_authenticated']
+        del request.session['staff_id']  # Remove staff ID from session
     return redirect('staff_login')
 
 def is_staff_authenticated(request):
     return 'staff_id' in request.session
 
-@login_required
-@user_passes_test(staff_check, login_url='/staff/login/')
 def kitchen(request):
-    try:
-        # Fetch pending orders
-        pending_orders = Order.objects.filter(status='pending').prefetch_related('items')
-        
-        # Fetch payment notifications (last 10)
-        payment_notifications = Notification.objects.filter(
-            notification_type='payment'
-        ).order_by('-created_at')[:10]
-        
-        return render(request, 'restaurant/kitchen.html', {
-            'orders': pending_orders,
-            'notifications': payment_notifications,
-            'staff_authenticated': True  # Ensure this is passed to template
-        })
+    if not is_staff_authenticated(request):
+        return redirect('staff_login')
     
-    except Exception as e:
-        # Log the error for debugging
-        print(f"Kitchen view error: {str(e)}")
-        raise 
+    # Fetch pending orders
+    pending_orders = Order.objects.filter(status='pending').prefetch_related('items')
+    
+    # Fetch payment notifications (last 10)
+    payment_notifications = Notification.objects.filter(
+        notification_type='payment'
+    ).order_by('-created_at')[:10]
+    
+    return render(request, 'restaurant/kitchen.html', {
+        'orders': pending_orders,
+        'notifications': payment_notifications
+    })
 
 
 @csrf_exempt
@@ -320,11 +289,12 @@ def toggle_stock(request, item_id):
 
 
 def stocks(request):
-    if not request.user.is_staff:  # Ensure the user is a staff member
-        return redirect('staff_login')  # Redirect to the staff login page if not authenticated
+    if not is_staff_authenticated(request):  # Use your custom authentication check
+        return redirect('staff_login')
 
     menu_items = Menu.objects.all()
     return render(request, 'restaurant/stocks.html', {'menu_items': menu_items})
+
 
 
 
@@ -617,14 +587,15 @@ def food_search(request):
 
 
 
-def staff_check(user):
-    # Check both Django staff flag and session flag
-    return user.is_staff or request.session.get('staff_authenticated', False)
-
-
-
-
-
-
 def food_bot(request, table_id):
     return render(request, 'restaurant/foodbot.html', {'table_id': table_id})
+
+
+
+
+
+
+
+def tables(request):
+    tables_list = Table.objects.all().order_by('table_number')
+    return render(request, 'restaurant/tables.html', {'tables': tables_list})
