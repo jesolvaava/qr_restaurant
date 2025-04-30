@@ -29,4 +29,5 @@ urlpatterns = [
     path('check_payment_status/<int:order_id>/', views.check_payment_status, name='check_payment_status'),
     path('complete_payment/<int:order_id>/', views.complete_payment, name='complete_payment'),
     path('foodbot/<int:table_id>/', views.food_bot, name='food_bot'),
+    path('tables/', views.tables, name='tables'),
 ]
