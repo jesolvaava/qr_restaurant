@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - QR Restaurant</title>
-   <link rel="icon" href="/media/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         /* General Styles */
@@ -29,31 +29,38 @@
 
         /* Background Audio */
         #background-audio {
-            display: none; /* Hide the audio element */
+            display: none;
         }
 
-        /* About Button */
-        .about-button {
+        /* Common Button Style */
+        .rounded-button {
             position: fixed;
             top: 20px;
-            right: 20px;
-            background: transparent; /* Transparent background */
-            color: white; /* White text */
             padding: 12px 24px;
-            border: 2px solid rgba(255, 255, 255, 0.5); /* Semi-transparent border */
-            border-radius: 30px; /* Rounded corners */
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 30px;
+            background: transparent;
+            color: white;
             font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
-            z-index: 2; /* Ensure it's above other elements */
-            transition: all 0.3s ease; /* Smooth transitions */
+            z-index: 2;
+            transition: all 0.3s ease;
         }
 
-        .about-button:hover {
-            background: rgba(255, 255, 255, 0.1); /* Slight white background on hover */
-            border-color: rgba(255, 255, 255, 0.8); /* Brighter border on hover */
-            color: white; /* Ensure text stays white */
-            transform: translateY(-2px); /* Slight lift on hover */
+        .rounded-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.8);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .about-button {
+            right: 20px;
+        }
+
+        .tables-button {
+            right: 140px;
         }
 
         /* Header Section */
@@ -83,7 +90,7 @@
             padding: 100px 20px;
             text-align: center;
             background: rgba(255, 255, 255, 0.9);
-            margin-top: 100vh; /* Push it below the initial view */
+            margin-top: 100vh;
         }
 
         .introduction h2 {
@@ -112,16 +119,19 @@
 <body>
     <!-- Background Video -->
     <video id="background-video" autoplay loop muted>
-    <source src="media/res.mp4" type="video/mp4">
-</video>
+        <source src="/static/media1/res.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
 
     <!-- Background Audio -->
     <audio id="background-audio" autoplay loop muted>
-    <source src="media/music.mp3" type="audio/mpeg">
-</audio>
+        <source src="/static/media1/music.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
 
-    <!-- About Button -->
-    <button class="about-button" onclick="window.location.href='/about/'">About</button>
+    <!-- About and View Tables Buttons -->
+    <button class="rounded-button about-button" onclick="window.location.href='/about/'">About</button>
+    <button class="rounded-button tables-button" onclick="window.location.href='{% url 'tables' %}'">View Tables</button>
 
     <!-- Header Section -->
     <div class="header">
@@ -145,10 +155,10 @@
     <script>
         // Background Audio Control
         window.addEventListener("DOMContentLoaded", () => {
-    const audio = document.getElementById("background-audio");
-    audio.muted = false;
-    audio.play().catch(error => console.log("Autoplay blocked:", error));
-         });
+            const audio = document.getElementById("background-audio");
+            audio.muted = false;
+            audio.play().catch(error => console.log("Autoplay blocked:", error));
+        });
 
         // Scroll Animation for Introduction Section
         window.addEventListener('scroll', () => {
