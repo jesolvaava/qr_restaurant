@@ -41,12 +41,12 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'restaurant.middleware.KitchenAccessMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'restaurant.middleware.KitchenAccessMiddleware',  # Keep this last
 ]
 
 ROOT_URLCONF = 'qr_restaurant.urls'
@@ -62,6 +62,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',  # Added for media files
             ],
         },
     },
@@ -111,6 +112,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Storage settings
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 # Security settings for production
 if not DEBUG:
     # HTTPS settings
@@ -128,14 +139,17 @@ if not DEBUG:
     SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
+else:
+    # Development-specific settings
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_SSL_REDIRECT = False
 
 # Session settings
-SESSION_COOKIE_SECURE = True  # For HTTPS
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400  # 24 hours in seconds
-
 
 # CSRF settings
 CSRF_COOKIE_HTTPONLY = True
@@ -155,17 +169,13 @@ LOGIN_URL = '/staff/login/'
 LOGIN_REDIRECT_URL = '/kitchen/'
 LOGOUT_REDIRECT_URL = '/staff/login/'
 
-# Whitenoise settings for static files
-STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-
 # Email settings (for password reset if needed)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
+# WhiteNoise settings
+WHITENOISE_MANIFEST_STRICT = False  # Helps with missing static files in development
